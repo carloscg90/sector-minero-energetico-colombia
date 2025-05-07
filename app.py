@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-st.title("Distribución de kWh Generado por Proyecto")
+st.title("Distribución de kWh Generado por Proyecto. Prueba Carlos Córdoba")
 
 # Cargar datos desde CSV
 df = pd.read_csv("datos_energia.csv")

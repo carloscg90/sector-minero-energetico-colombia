@@ -6,7 +6,7 @@ import os
 import matplotlib.pyplot as plt
 
 st.markdown("<h1 style='text-align: center;'>⚡ Dashboard Sector Minero Energético Colombia</h1>", unsafe_allow_html=True)
-st.markdown("<h1 style='text-align: center;'>por Carlos Córdoba</h3>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>  por Carlos Córdoba</h3>", unsafe_allow_html=True)
 
 db_path = "SectorMineroEnergeticoColombia.db"
 

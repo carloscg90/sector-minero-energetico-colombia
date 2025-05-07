@@ -30,15 +30,15 @@ if os.path.exists(db_path):
     st.bar_chart(grafico)
 
     # Gráfico de barras: promedio de kWh generado por año
-    if 'anio' in data.columns:
+    if 'fecha' in data.columns:
         st.subheader("📊 Promedio de energía generada por año")
-        promedio_anual = data.groupby('anio')['kw_h_generado'].mean()
+        promedio_anual = data.groupby('fecha')['kw_h_generado'].mean()
         st.bar_chart(promedio_anual)
 
-    # Pie chart: distribución total de kWh por tipo de fuente (si existe columna)
-    if 'fuente' in data.columns:
+    # Pie chart: distribución total de kWh por tipo de energia (si existe columna)
+    if 'tipo_energia_id' in data.columns:
         st.subheader("🥧 Distribución por fuente energética")
-        pie_data = data.groupby('fuente')['kw_h_generado'].sum()
+        pie_data = data.groupby('tipo_energia_id')['kw_h_generado'].sum()
         fig1, ax1 = plt.subplots()
         ax1.pie(pie_data, labels=pie_data.index, autopct='%1.1f%%', startangle=90)
         ax1.axis('equal')
@@ -56,3 +56,4 @@ if os.path.exists(db_path):
     conn.close()
 else:
     st.error("❌ No se encontró el archivo SectorMineroEnergeticoColombia.db. Asegúrate de subirlo al repositorio.")
+

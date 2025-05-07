@@ -1,25 +1,58 @@
 
 import streamlit as st
 import pandas as pd
+import sqlite3
+import os
 import matplotlib.pyplot as plt
 
-st.title("Distribución de kWh Generado por Proyecto. Prueba Carlos Córdoba.")
+# Título
+st.markdown("<h1 style='text-align: center;'>⚡ Dashboard Sector Minero Energético Colombia. Prueba Carlos Córdoba</h1>", unsafe_allow_html=True)
 
-# Cargar datos desde CSV
-df = pd.read_csv("datos_energia.csv")
+# Ruta a la base de datos
+db_path = "SectorMineroEnergeticoColombia.db"
 
-# Agrupar por nombre del proyecto
-df_grouped = df.groupby('nombre')['kw_h_generado'].sum().reset_index()
+# Verificar si el archivo existe
+if os.path.exists(db_path):
+    # Conexión
+    conn = sqlite3.connect(db_path)
 
-# Selector de top N
-top_n = st.slider("Selecciona el número de proyectos a mostrar", 1, len(df_grouped), 5)
+    # Consulta
+    query = "SELECT * FROM eficiencia_energetica"
+    data = pd.read_sql_query(query, conn)
 
-# Top N
-df_top = df_grouped.sort_values(by='kw_h_generado', ascending=False).head(top_n)
+    # Mostrar tabla
+    st.subheader("📋 Tabla completa: eficiencia_energetica")
+    st.dataframe(data)
 
-# Pie chart
-fig, ax = plt.subplots()
-ax.pie(df_top['kw_h_generado'], labels=df_top['nombre'], autopct='%1.1f%%', startangle=140)
-ax.axis('equal')
-plt.title(f"Top {top_n} Proyectos por kWh Generado")
-st.pyplot(fig)
+    # Gráfico de barras de energía generada por proyecto
+    st.subheader("📊 Energía generada por proyecto")
+    grafico = data.groupby('proyecto_id')['kw_h_generado'].sum()
+    st.bar_chart(grafico)
+
+    # Gráfico de barras: promedio de kWh generado por año
+    if 'anio' in data.columns:
+        st.subheader("📊 Promedio de energía generada por año")
+        promedio_anual = data.groupby('anio')['kw_h_generado'].mean()
+        st.bar_chart(promedio_anual)
+
+    # Pie chart: distribución total de kWh por tipo de fuente (si existe columna)
+    if 'fuente' in data.columns:
+        st.subheader("🥧 Distribución por fuente energética")
+        pie_data = data.groupby('fuente')['kw_h_generado'].sum()
+        fig1, ax1 = plt.subplots()
+        ax1.pie(pie_data, labels=pie_data.index, autopct='%1.1f%%', startangle=90)
+        ax1.axis('equal')
+        st.pyplot(fig1)
+
+    # Pie chart: distribución de proyectos por condición (si existe columna)
+    if 'condicion' in data.columns:
+        st.subheader("🥧 Distribución de proyectos por condición")
+        condicion_data = data['condicion'].value_counts()
+        fig2, ax2 = plt.subplots()
+        ax2.pie(condicion_data, labels=condicion_data.index, autopct='%1.1f%%', startangle=90)
+        ax2.axis('equal')
+        st.pyplot(fig2)
+
+    conn.close()
+else:
+    st.error("❌ No se encontró el archivo SectorMineroEnergeticoColombia.db. Asegúrate de subirlo al repositorio.")

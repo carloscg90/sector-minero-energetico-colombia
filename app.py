@@ -5,55 +5,55 @@ import sqlite3
 import os
 import matplotlib.pyplot as plt
 
-# Título
-st.markdown("<h1 style='text-align: center;'>⚡ Dashboard Sector Minero Energético Colombia. Prueba Carlos Córdoba</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>⚡ Dashboard Sector Minero Energético Colombia</h1>", unsafe_allow_html=True)
 
-# Ruta a la base de datos
 db_path = "SectorMineroEnergeticoColombia.db"
 
-# Verificar si el archivo existe
 if os.path.exists(db_path):
-    # Conexión
     conn = sqlite3.connect(db_path)
 
-    # Consulta
-    query = "SELECT * FROM eficiencia_energetica"
-    data = pd.read_sql_query(query, conn)
-
-    # Mostrar tabla
-    st.subheader("📋 Tabla completa: eficiencia_energetica")
+    st.subheader("📋 Tabla eficiencia_energetica")
+    data = pd.read_sql_query("SELECT * FROM eficiencia_energetica", conn)
     st.dataframe(data)
 
-    # Gráfico de barras de energía generada por proyecto
     st.subheader("📊 Energía generada por proyecto")
-    grafico = data.groupby('proyecto_id')['kw_h_generado'].sum()
-    st.bar_chart(grafico)
+    energia = data.groupby('proyecto_id')['kw_h_generado'].sum()
+    st.bar_chart(energia)
 
-    # Gráfico de barras: promedio de kWh generado por año
-    if 'fecha' in data.columns:
-        st.subheader("📊 Promedio de energía generada por año")
-        promedio_anual = data.groupby('fecha')['kw_h_generado'].mean()
-        st.bar_chart(promedio_anual)
+    st.subheader("💰 Proyectos con Inversión superior al umbral")
+    umbral = st.slider("Selecciona el monto mínimo de inversión", min_value=0, max_value=10000000, step=500000, value=2000000)
 
-    # Pie chart: distribución total de kWh por tipo de energia (si existe columna)
-    if 'tipo_energia_id' in data.columns:
-        st.subheader("🥧 Distribución por fuente energética")
-        pie_data = data.groupby('tipo_energia_id')['kw_h_generado'].sum()
-        fig1, ax1 = plt.subplots()
-        ax1.pie(pie_data, labels=pie_data.index, autopct='%1.1f%%', startangle=90)
-        ax1.axis('equal')
-        st.pyplot(fig1)
+    query = f"""
+        SELECT sub.nombre, sub.total_inversion
+        FROM (
+            SELECT p.nombre, SUM(i.monto) AS total_inversion
+            FROM proyectos p
+            JOIN inversiones i ON p.id_proyecto = i.proyecto_id
+            GROUP BY p.nombre
+        ) sub
+        WHERE sub.total_inversion > {umbral};
+    """
+    df_inversiones = pd.read_sql_query(query, conn)
+    st.dataframe(df_inversiones)
 
-    # Pie chart: distribución de proyectos por condición (si existe columna)
-    if 'condicion' in data.columns:
-        st.subheader("🥧 Distribución de proyectos por condición")
-        condicion_data = data['condicion'].value_counts()
+    if not df_inversiones.empty:
+        # Gráfico de barras
+        fig, ax = plt.subplots()
+        ax.bar(df_inversiones['nombre'], df_inversiones['total_inversion'], color='orange')
+        ax.set_ylabel("Inversión Total")
+        ax.set_title(f"Inversiones por proyecto > {umbral:,} COP")
+        plt.xticks(rotation=45, ha='right')
+        st.pyplot(fig)
+
+        # Gráfico de torta
+        st.subheader("🥧 Distribución de inversión por proyecto")
         fig2, ax2 = plt.subplots()
-        ax2.pie(condicion_data, labels=condicion_data.index, autopct='%1.1f%%', startangle=90)
+        ax2.pie(df_inversiones['total_inversion'], labels=df_inversiones['nombre'], autopct='%1.1f%%', startangle=90)
         ax2.axis('equal')
         st.pyplot(fig2)
+    else:
+        st.info("🔍 No hay proyectos con inversión mayor al umbral seleccionado.")
 
     conn.close()
 else:
     st.error("❌ No se encontró el archivo SectorMineroEnergeticoColombia.db. Asegúrate de subirlo al repositorio.")
-

@@ -2,3 +2,4 @@ streamlit
 pandas
 matplotlib
 sqlite3  # Nota: este viene incluido con Python, pero puedes dejarlo si tu host lo requiere
+os
